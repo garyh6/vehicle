@@ -1,0 +1,13 @@
+.wrapper-properties {
+  .form-item-group {
+    margin-bottom: 0;
+    .icon {
+      cursor: pointer;
+      &.icon-delete {
+        position: absolute;
+        top: 2px;
+        margin-left: 5px;
+      }
+    }
+  }
+}
