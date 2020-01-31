@@ -6,6 +6,8 @@ const vehicleSchema = new mongoose.Schema(
     x: Number,
     y: Number,
     temperature: Number,
+    dev: String,
+    prod: String,
     properties: {}
   },
   { collection: "properties" }
