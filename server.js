@@ -5,7 +5,7 @@ const app = express();
 const mongoose = require("mongoose");
 const cors = require("cors");
 
-const whitelist = ["http://localhost:4001", "http://localhost:3000"];
+const whitelist = ["http://localhost:4001", "http://127.0.0.1:4001"];
 const corsOptions = {
   origin: function(origin, callback) {
     if (whitelist.indexOf(origin) !== -1 || !origin) {
