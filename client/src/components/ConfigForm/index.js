@@ -10,6 +10,8 @@ const ConfigForm = ({ vehicleConfig }) => {
   const fixedProps = Object.keys(vehicleConfig);
   fixedProps.splice(fixedProps.indexOf("properties"), 1);
 
+  const [config, setConfig] = useState(vehicleConfig);
+
   const currentDatetime = getCurrentDatetime();
   const parabola = x => 6 * x ** 2 - 6 * x + 2;
   const [subtract, setSubtract] = useState(false);
@@ -26,8 +28,8 @@ const ConfigForm = ({ vehicleConfig }) => {
     });
     if (subtract) setX(x - Math.random());
     else setX(x + Math.random());
-    console.log("x", x);
-    console.log("y", y);
+
+    setConfig({ ...config, temperature: y });
   }, 2000);
 
   socket.on("add prop", ({ err, res }) => {
@@ -50,18 +52,23 @@ const ConfigForm = ({ vehicleConfig }) => {
       <Form {...formItemLayout}>
         {fixedProps.map(key => (
           <Form.Item key={key} label={key} className="form-item-group">
-            <Input disabled defaultValue={vehicleConfig[key]}></Input>
+            <Input
+              disabled
+              defaultValue={config[key]}
+              value={config[key]}
+            ></Input>
           </Form.Item>
         ))}
 
-        {Object.keys(vehicleConfig.properties)
+        {Object.keys(config.properties)
           .sort()
           .map((key, idx) => {
             return (
               <Form.Item label={key} key={key} className="form-item-group">
                 <Input
                   disabled
-                  defaultValue={vehicleConfig.properties[key]}
+                  defaultValue={config.properties[key]}
+                  value={config.properties[key]}
                 ></Input>
               </Form.Item>
             );
