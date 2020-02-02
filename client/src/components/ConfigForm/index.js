@@ -1,47 +1,86 @@
 import { Form, Input, Row } from "antd";
 import axios from "axios";
 import React, { useState } from "react";
-import io from "socket.io-client";
-// import { useInterval } from "../../utils/useInterval";
-
+import { socket } from "../../sockets/sockets";
+import { getCurrentDatetime } from "../../utils/getCurrentDatetime";
+import { useInterval } from "../../utils/useInterval";
 const ConfigForm = ({ vehicleConfig }) => {
-  console.log("************ vehicleConfig._id", vehicleConfig._id);
   // todo need to refactor - init socket from app, change db schema to be jsut one properties (relational db makes sense)
-  const socket = io("http://localhost:5000", {
-    query: {
-      id: vehicleConfig._id,
-      type: "Vehicle"
-    }
-  });
+
   if (!vehicleConfig.properties) vehicleConfig.properties = {};
   const fixedProps = Object.keys(vehicleConfig);
   fixedProps.splice(fixedProps.indexOf("properties"), 1);
 
   const [config, setConfig] = useState(vehicleConfig);
 
-  // const currentDatetime = getCurrentDatetime();
-  // const parabola = x => 6 * x ** 2 - 6 * x + 2;
-  // const [subtract, setSubtract] = useState(false);
-  // const [x, setX] = useState(0);
-  // const [y, setY] = useState(0);
+  const fixed2 = num => {
+    return Math.round(num * 100) / 100;
+  };
 
-  // useInterval(() => {
-  //   if (x > 5 && !subtract) setSubtract(true);
-  //   if (x < 0 && subtract) setSubtract(false);
-  //   setY(parabola(x));
-  //   socket.emit("temperature", {
-  //     temperature: y,
-  //     datetime: currentDatetime
-  //   });
-  //   if (subtract) setX(x - Math.random());
-  //   else setX(x + Math.random());
+  const currentDatetime = getCurrentDatetime();
+  const parabola = x => fixed2(6 * x ** 2 - 6 * x + 2);
+  const [subtract, setSubtract] = useState(false);
+  const [tempX, setTempX] = useState(0);
+  const [tempY, setTempY] = useState(config.temperature);
+  const [coordinateX, setCoordinateX] = useState(config.x);
+  const [coordinateY, setCoordinateY] = useState(config.y);
 
-  //   setConfig({ ...config, temperature: y });
-  // }, 2000);
+  const line = x => fixed2(7 * x + 12);
 
-  // socket.on("add prop", ({ err, res }) => {
-  //   console.log("************ wtf", res);
-  // });
+  // Emit changing temperature data
+  // Emit changing x coordinate
+  // Emit changing y coordinate
+
+  useInterval(() => {
+    // Random Temp
+    if (tempX > 5 && !subtract) setSubtract(true);
+    if (tempX < 0 && subtract) setSubtract(false);
+    setTempY(parabola(tempX));
+
+    // using tempX for simplicity
+    setCoordinateX(tempX);
+    setCoordinateY(line(tempX));
+
+    socket.emit(
+      "new vehicle data",
+      {
+        vehicleId: config._id,
+        temperature: tempY,
+        x: coordinateX,
+        y: coordinateY,
+        datetime: currentDatetime
+      },
+      (err, res) => {
+        if (err) return console.log("new v data", err);
+        console.log(res);
+      }
+    );
+
+    if (subtract) setTempX(fixed2(tempX - Math.random()));
+    else setTempX(fixed2(tempX + Math.random()));
+
+    setConfig({
+      ...config,
+      temperature: tempY,
+      x: coordinateX,
+      y: coordinateY
+    });
+
+    axios({
+      method: "patch",
+      url: `/properties/${vehicleConfig._id}/internal`,
+      data: {
+        temperature: tempY,
+        x: coordinateX,
+        y: coordinateY
+      }
+    })
+      .then(res => {
+        console.log("************ updated");
+      })
+      .catch(err => {});
+  }, 50000);
+  // have a button that can change speed
 
   socket.on(
     "patch property to vehicle",

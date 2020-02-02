@@ -15,6 +15,7 @@ function App() {
         console.log("************ err", err);
       });
   }, []);
+  console.log("************ vehicles", vehicles);
 
   return (
     <div className="App">

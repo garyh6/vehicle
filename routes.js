@@ -70,4 +70,25 @@ router.delete("/:id", getVehicle, checkImmutableKeys, async (req, res) => {
   }
 });
 
+// Actual Vehical Values
+// only one vehicle - doing getVehicle is kinda dumb
+router.patch(
+  "/:id/internal",
+  getVehicle,
+  async ({ body: { temperature, x, y } }, res) => {
+    console.log("************ req.body");
+    res.vehicle.temperature = temperature;
+    res.vehicle.x = x;
+    res.vehicle.y = y;
+
+    try {
+      // res.vehicle.markModified("properties");
+      const updatedVehicle = await res.vehicle.save();
+      res.json(updatedVehicle);
+    } catch (err) {
+      res.status(400).json({ message: err.message });
+    }
+  }
+);
+
 module.exports = router;
