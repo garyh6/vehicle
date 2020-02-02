@@ -5,7 +5,10 @@ const app = express();
 const mongoose = require("mongoose");
 const cors = require("cors");
 
-const whitelist = ["http://localhost:4001", "http://127.0.0.1:4001"];
+const whitelist = [
+  `http://localhost:${process.env.SERVER_PORT}`,
+  `http://127.0.0.1:${process.env.SERVER_PORT}`
+];
 const corsOptions = {
   origin: function(origin, callback) {
     if (whitelist.indexOf(origin) !== -1 || !origin) {
@@ -29,4 +32,6 @@ app.use(express.json());
 const vehicleRouter = require("./routes");
 app.use("/properties", vehicleRouter);
 
-app.listen(4001, () => console.log("Server is running on localhost:4001"));
+app.listen(process.env.SERVER_PORT, () =>
+  console.log(`Server is running on localhost:${process.env.SERVER_PORT}`)
+);
