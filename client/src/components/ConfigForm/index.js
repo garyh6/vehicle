@@ -6,8 +6,12 @@ import io from "socket.io-client";
 
 const ConfigForm = ({ vehicleConfig }) => {
   console.log("************ vehicleConfig._id", vehicleConfig._id);
+  // todo need to refactor - init socket from app, change db schema to be jsut one properties (relational db makes sense)
   const socket = io("http://localhost:5000", {
-    query: `id=${vehicleConfig._id}`
+    query: {
+      id: vehicleConfig._id,
+      type: "Vehicle"
+    }
   });
   if (!vehicleConfig.properties) vehicleConfig.properties = {};
   const fixedProps = Object.keys(vehicleConfig);
@@ -42,7 +46,7 @@ const ConfigForm = ({ vehicleConfig }) => {
   socket.on(
     "patch property to vehicle",
     ({ newKey: key, newValue: value, id }) => {
-      console.log("************ got some data");
+      console.log("************ got some data", key, value, id);
       // patch data then
       if (id === vehicleConfig._id) {
         axios({
@@ -55,7 +59,10 @@ const ConfigForm = ({ vehicleConfig }) => {
         })
           .then(res => {
             console.log("************1st res", res);
-            setConfig({ ...config, [key]: value });
+            let newConfig = { ...config };
+            newConfig.properties[key] = value;
+            setConfig(newConfig);
+
             socket.emit("acknowledge update", {
               id,
               key,
@@ -69,6 +76,36 @@ const ConfigForm = ({ vehicleConfig }) => {
       }
     }
   );
+  // i really should chagne the vehicle schema/db
+  socket.on("delete property to vehicle", ({ key, id, origin }) => {
+    console.log("************ prop to delete", key, origin, id);
+    // delete data
+    if (id === vehicleConfig._id) {
+      axios({
+        method: "delete",
+        url: `/properties/${vehicleConfig._id}`,
+        data: {
+          key
+        }
+      })
+        .then(res => {
+          console.log("************ deleted", res);
+          let newProps = { ...config };
+          delete newProps.properties[key];
+          setConfig(newProps);
+
+          socket.emit("acknowledge delete", {
+            id,
+            key,
+            origin,
+            msg: "success"
+          });
+        })
+        .catch(err => console.log("************2nd err", err));
+    } else {
+      console.log("dont update");
+    }
+  });
 
   const formItemLayout = {
     labelCol: {
@@ -86,11 +123,7 @@ const ConfigForm = ({ vehicleConfig }) => {
       <Form {...formItemLayout}>
         {fixedProps.map(key => (
           <Form.Item key={key} label={key} className="form-item-group">
-            <Input
-              disabled
-              defaultValue={config[key]}
-              value={config[key]}
-            ></Input>
+            <Input disabled value={config[key]}></Input>
           </Form.Item>
         ))}
 
@@ -99,11 +132,7 @@ const ConfigForm = ({ vehicleConfig }) => {
           .map((key, idx) => {
             return (
               <Form.Item label={key} key={key} className="form-item-group">
-                <Input
-                  disabled
-                  defaultValue={config.properties[key]}
-                  value={config.properties[key]}
-                ></Input>
+                <Input disabled value={config.properties[key]}></Input>
               </Form.Item>
             );
           })}
