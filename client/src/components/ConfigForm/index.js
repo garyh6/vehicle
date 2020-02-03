@@ -18,14 +18,15 @@ const ConfigForm = ({ vehicleConfig }) => {
   };
 
   const currentDatetime = getCurrentDatetime();
-  const parabola = x => fixed2(6 * x ** 2 - 6 * x + 2);
+  const parabola = x => fixed2(x + Math.random() * 10);
   const [subtract, setSubtract] = useState(false);
-  const [tempX, setTempX] = useState(0);
+  const [tempX, setTempX] = useState(config.x || 400);
   const [tempY, setTempY] = useState(config.temperature);
   const [coordinateX, setCoordinateX] = useState(config.x);
   const [coordinateY, setCoordinateY] = useState(config.y);
 
-  const line = x => fixed2(7 * x + 12);
+  const polynomial = x =>
+    fixed2(-1256 + 10.8 * x - 0.022 * x ** 2 + 0.0000133 * x ** 3);
 
   // Emit changing temperature data
   // Emit changing x coordinate
@@ -33,13 +34,13 @@ const ConfigForm = ({ vehicleConfig }) => {
 
   useInterval(() => {
     // Random Temp
-    if (tempX > 5 && !subtract) setSubtract(true);
-    if (tempX < 0 && subtract) setSubtract(false);
+    if (tempX > 800 && !subtract) setSubtract(true);
+    if (tempX < 200 && subtract) setSubtract(false);
     setTempY(parabola(tempX));
 
     // using tempX for simplicity
     setCoordinateX(tempX);
-    setCoordinateY(line(tempX));
+    setCoordinateY(polynomial(tempX));
 
     socket.emit(
       "new vehicle data",
@@ -56,8 +57,11 @@ const ConfigForm = ({ vehicleConfig }) => {
       }
     );
 
-    if (subtract) setTempX(fixed2(tempX - Math.random()));
-    else setTempX(fixed2(tempX + Math.random()));
+    if (tempX < 200) setSubtract(false);
+    if (tempX > 800) setSubtract(true);
+
+    if (subtract) setTempX(Math.abs(fixed2(tempX - Math.random() * 10)));
+    else setTempX(Math.abs(fixed2(tempX + Math.random() * 10)));
 
     setConfig({
       ...config,
@@ -79,7 +83,7 @@ const ConfigForm = ({ vehicleConfig }) => {
         console.log("************ updated");
       })
       .catch(err => {});
-  }, 50000);
+  }, 500);
   // have a button that can change speed
 
   socket.on(

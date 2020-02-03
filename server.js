@@ -6,8 +6,8 @@ const mongoose = require("mongoose");
 const cors = require("cors");
 
 const whitelist = [
-  `http://localhost:${process.env.SERVER_PORT}`,
-  `http://127.0.0.1:${process.env.SERVER_PORT}`
+  `http://localhost:${process.env.SERVER_PORT}/`,
+  `http://127.0.0.1:${process.env.SERVER_PORT}/`
 ];
 const corsOptions = {
   origin: function(origin, callback) {

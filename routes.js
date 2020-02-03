@@ -76,7 +76,7 @@ router.patch(
   "/:id/internal",
   getVehicle,
   async ({ body: { temperature, x, y } }, res) => {
-    console.log("************ req.body");
+    console.log("************ updating vehicle");
     res.vehicle.temperature = temperature;
     res.vehicle.x = x;
     res.vehicle.y = y;
