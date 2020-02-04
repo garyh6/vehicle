@@ -85,7 +85,7 @@ const ConfigForm = ({ vehicleConfig }) => {
     } catch (err) {
       return console.log("************ err", err);
     }
-  }, 10000);
+  }, 500);
   // have a button that can change speed
   socket.removeAllListeners("patch property to vehicle");
   socket.on(
