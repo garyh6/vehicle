@@ -72,7 +72,7 @@ const ConfigForm = ({ vehicleConfig }) => {
 
     axios({
       method: "patch",
-      url: `/properties/${vehicleConfig._id}/internal`,
+      url: `http://${process.env.REACT_APP_DEV_SERVER}/properties/${vehicleConfig._id}/internal`,
       data: {
         temperature: tempY,
         x: coordinateX,
@@ -94,7 +94,7 @@ const ConfigForm = ({ vehicleConfig }) => {
       if (id === vehicleConfig._id) {
         axios({
           method: "patch",
-          url: `/properties/${vehicleConfig._id}`,
+          url: `http://${process.env.REACT_APP_DEV_SERVER}/properties/${vehicleConfig._id}`,
           data: {
             key,
             value
@@ -126,7 +126,7 @@ const ConfigForm = ({ vehicleConfig }) => {
     if (id === vehicleConfig._id) {
       axios({
         method: "delete",
-        url: `/properties/${vehicleConfig._id}`,
+        url: `http://${process.env.REACT_APP_DEV_SERVER}/properties/${vehicleConfig._id}`,
         data: {
           key
         }

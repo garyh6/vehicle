@@ -9,7 +9,7 @@ function App() {
   const [vehicles, setVehicles] = useState([]);
   useEffect(() => {
     axios
-      .get("/properties")
+      .get(`http://${process.env.REACT_APP_DEV_SERVER}/properties`)
       .then(res => setVehicles(res.data))
       .catch(err => {
         console.log("************ err", err);
