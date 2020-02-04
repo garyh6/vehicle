@@ -1,29 +1,22 @@
 import { Col, Row } from "antd";
 import "antd/dist/antd.css";
-import axios from "axios";
-import React, { useEffect, useState } from "react";
+import React from "react";
 import "./App.css";
 import Properties from "./components/Properties";
-
+import { SocketProvider } from "./contexts/SocketContext";
+import { Provider } from "./contexts/VehiclesContext";
 function App() {
-  const [vehicles, setVehicles] = useState([]);
-  useEffect(() => {
-    axios
-      .get(`http://${process.env.REACT_APP_DEV_SERVER}/properties`)
-      .then(res => setVehicles(res.data))
-      .catch(err => {
-        console.log("************ err", err);
-      });
-  }, []);
-  console.log("************ vehicles", vehicles);
-
   return (
     <div className="App">
-      <Row span={24}>
-        <Col span={24}>
-          <Properties vehicles={vehicles}></Properties>
-        </Col>
-      </Row>
+      <Provider>
+        <SocketProvider>
+          <Row span={24}>
+            <Col span={24}>
+              <Properties></Properties>
+            </Col>
+          </Row>
+        </SocketProvider>
+      </Provider>
     </div>
   );
 }

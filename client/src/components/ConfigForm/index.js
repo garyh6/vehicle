@@ -1,12 +1,12 @@
 import { Form, Input, Row } from "antd";
 import axios from "axios";
-import React, { useState } from "react";
-import { socket } from "../../sockets/sockets";
+import React, { useContext, useState } from "react";
+import { SocketContext } from "../../contexts/SocketContext";
 import { getCurrentDatetime } from "../../utils/getCurrentDatetime";
 import { useInterval } from "../../utils/useInterval";
 const ConfigForm = ({ vehicleConfig }) => {
-  // todo need to refactor - init socket from app, change db schema to be jsut one properties (relational db makes sense)
-
+  // todo need to change db schema to be jsut one properties
+  const { socket } = useContext(SocketContext);
   if (!vehicleConfig.properties) vehicleConfig.properties = {};
   const fixedProps = Object.keys(vehicleConfig);
   fixedProps.splice(fixedProps.indexOf("properties"), 1);
@@ -20,27 +20,27 @@ const ConfigForm = ({ vehicleConfig }) => {
   const currentDatetime = getCurrentDatetime();
   const parabola = x => fixed2(x + Math.random() * 10);
   const [subtract, setSubtract] = useState(false);
-  const [tempX, setTempX] = useState(config.x || 400);
+  const [tempX, setTempX] = useState(config.x);
   const [tempY, setTempY] = useState(config.temperature);
   const [coordinateX, setCoordinateX] = useState(config.x);
   const [coordinateY, setCoordinateY] = useState(config.y);
 
-  const polynomial = x =>
-    fixed2(-1256 + 10.8 * x - 0.022 * x ** 2 + 0.0000133 * x ** 3);
+  const line = x => fixed2(0.1 * x + 11);
 
   // Emit changing temperature data
   // Emit changing x coordinate
   // Emit changing y coordinate
 
-  useInterval(() => {
+  useInterval(async () => {
     // Random Temp
-    if (tempX > 800 && !subtract) setSubtract(true);
-    if (tempX < 200 && subtract) setSubtract(false);
     setTempY(parabola(tempX));
+
+    if (coordinateX < 20) setSubtract(false);
+    if (coordinateX > 800) setSubtract(true);
 
     // using tempX for simplicity
     setCoordinateX(tempX);
-    setCoordinateY(polynomial(tempX));
+    setCoordinateY(line(tempX));
 
     socket.emit(
       "new vehicle data",
@@ -57,11 +57,13 @@ const ConfigForm = ({ vehicleConfig }) => {
       }
     );
 
-    if (tempX < 200) setSubtract(false);
-    if (tempX > 800) setSubtract(true);
-
-    if (subtract) setTempX(Math.abs(fixed2(tempX - Math.random() * 10)));
-    else setTempX(Math.abs(fixed2(tempX + Math.random() * 10)));
+    if (subtract) {
+      let val = Math.abs(fixed2(tempX - Math.random() * 10));
+      setTempX(val);
+    } else {
+      let val = Math.abs(fixed2(tempX + Math.random() * 10));
+      setTempX(val);
+    }
 
     setConfig({
       ...config,
@@ -70,81 +72,85 @@ const ConfigForm = ({ vehicleConfig }) => {
       y: coordinateY
     });
 
-    axios({
-      method: "patch",
-      url: `http://${process.env.REACT_APP_DEV_SERVER}/properties/${vehicleConfig._id}/internal`,
-      data: {
-        temperature: tempY,
-        x: coordinateX,
-        y: coordinateY
-      }
-    })
-      .then(res => {
-        console.log("************ updated");
-      })
-      .catch(err => {});
-  }, 500);
+    try {
+      const res = await axios({
+        method: "patch",
+        url: `http://${process.env.REACT_APP_DEV_SERVER}/properties/${vehicleConfig._id}/internal`,
+        data: {
+          temperature: tempY,
+          x: coordinateX,
+          y: coordinateY
+        }
+      });
+      console.log("************ updated res", res);
+    } catch (err) {
+      return console.log("************ err", err);
+    }
+  }, 10000);
   // have a button that can change speed
-
+  socket.removeAllListeners("patch property to vehicle");
   socket.on(
     "patch property to vehicle",
-    ({ newKey: key, newValue: value, id }) => {
+    async ({ newKey: key, newValue: value, id }) => {
       console.log("************ got some data", key, value, id);
       // patch data then
       if (id === vehicleConfig._id) {
-        axios({
-          method: "patch",
-          url: `http://${process.env.REACT_APP_DEV_SERVER}/properties/${vehicleConfig._id}`,
-          data: {
-            key,
-            value
-          }
-        })
-          .then(res => {
-            console.log("************1st res", res);
-            let newConfig = { ...config };
-            newConfig.properties[key] = value;
-            setConfig(newConfig);
-
-            socket.emit("acknowledge update", {
-              id,
+        try {
+          const res = await axios({
+            method: "patch",
+            url: `http://${process.env.REACT_APP_DEV_SERVER}/properties/${vehicleConfig._id}`,
+            data: {
               key,
-              value,
-              msg: "success"
-            });
-          })
-          .catch(err => console.log("************2nd err", err));
+              value
+            }
+          });
+          console.log("************1st res", res);
+          let newConfig = { ...config };
+          newConfig.properties[key] = value;
+          setConfig(newConfig);
+
+          socket.emit("acknowledge update", {
+            id,
+            key,
+            value,
+            msg: "success"
+          });
+        } catch (err) {
+          return console.log("************2nd err", err);
+        }
       } else {
         console.log("dont update");
       }
     }
   );
   // i really should chagne the vehicle schema/db
-  socket.on("delete property to vehicle", ({ key, id, origin }) => {
+  socket.removeAllListeners("delete property to vehicle");
+  socket.on("delete property to vehicle", async ({ key, id, origin }) => {
     console.log("************ prop to delete", key, origin, id);
     // delete data
     if (id === vehicleConfig._id) {
-      axios({
-        method: "delete",
-        url: `http://${process.env.REACT_APP_DEV_SERVER}/properties/${vehicleConfig._id}`,
-        data: {
-          key
-        }
-      })
-        .then(res => {
-          console.log("************ deleted", res);
-          let newProps = { ...config };
-          delete newProps.properties[key];
-          setConfig(newProps);
+      try {
+        const res = await axios({
+          method: "delete",
+          url: `http://${process.env.REACT_APP_DEV_SERVER}/properties/${vehicleConfig._id}`,
+          data: {
+            key
+          }
+        });
+        console.log("************ deleted", res);
+        let newConfig = { ...config };
+        delete newConfig.properties[key];
+        setConfig(newConfig);
 
-          socket.emit("acknowledge delete", {
-            id,
-            key,
-            origin,
-            msg: "success"
-          });
-        })
-        .catch(err => console.log("************2nd err", err));
+        socket.emit("acknowledge delete", {
+          id,
+          key,
+          origin,
+          msg: "success"
+        });
+      } catch (err) {
+        return console.log("************2nd err", err);
+      }
     } else {
       console.log("dont update");
     }
