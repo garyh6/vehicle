@@ -1,3 +1,4 @@
+// Did not write this file (copied)
 import { useEffect, useRef } from "react";
 
 export const useInterval = (callback, delay) => {

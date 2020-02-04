@@ -10,7 +10,6 @@ export const SocketProvider = props => {
       type: "Vehicle"
     }
   });
-  console.log("************ twice?");
 
   const socketContext = {
     socket

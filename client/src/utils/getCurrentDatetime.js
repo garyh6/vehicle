@@ -1,3 +1,4 @@
+// Did not write this file (copied)
 export const getCurrentDatetime = () => {
   const today = new Date();
   const date =

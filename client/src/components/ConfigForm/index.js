@@ -37,7 +37,7 @@ const ConfigForm = ({ vehicleConfig }) => {
     if (coordinateX < 20) setSubtract(false);
     if (coordinateX > 800) setSubtract(true);
 
-    // using tempX for simplicity
+    // using temp for simplicity
     setCoordinateX(temp);
     setCoordinateY(line(temp));
 
@@ -89,7 +89,6 @@ const ConfigForm = ({ vehicleConfig }) => {
   socket.on(
     "patch property to vehicle",
     async ({ newKey: key, newValue: value, id }) => {
-      // patch data then
       if (id === vehicleConfig._id) {
         try {
           const res = await axios({
@@ -118,10 +117,9 @@ const ConfigForm = ({ vehicleConfig }) => {
       }
     }
   );
-  // i really should chagne the vehicle schema/db
+
   socket.removeAllListeners("delete property to vehicle");
   socket.on("delete property to vehicle", async ({ key, id, origin }) => {
-    // delete data
     if (id === vehicleConfig._id) {
       try {
         const res = await axios({

@@ -36,7 +36,6 @@ router.get("/", async (req, res) => {
 
 // Update Properties of Vehicle
 router.patch("/:id", getVehicle, checkImmutableKeys, async (req, res) => {
-  console.log("************ update endpoint");
   const key = req.body.key;
   const value = req.body.value;
   if (key === null && value === null) {
@@ -76,7 +75,6 @@ router.patch(
   "/:id/internal",
   getVehicle,
   async ({ body: { temperature, x, y } }, res) => {
-    console.log("************ updating vehicle");
     res.vehicle.temperature = temperature;
     res.vehicle.x = x;
     res.vehicle.y = y;
