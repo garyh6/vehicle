@@ -50,9 +50,8 @@ const ConfigForm = ({ vehicleConfig }) => {
         y: coordinateY,
         datetime: currentDatetime
       },
-      (err, res) => {
+      err => {
         if (err) return console.log("new v data", err);
-        console.log(res);
       }
     );
 
@@ -81,7 +80,6 @@ const ConfigForm = ({ vehicleConfig }) => {
           y: coordinateY
         }
       });
-      console.log("************ updated res", res);
     } catch (err) {
       return console.log("************ err", err);
     }
@@ -91,7 +89,6 @@ const ConfigForm = ({ vehicleConfig }) => {
   socket.on(
     "patch property to vehicle",
     async ({ newKey: key, newValue: value, id }) => {
-      console.log("************ got some data", key, value, id);
       // patch data then
       if (id === vehicleConfig._id) {
         try {
@@ -103,7 +100,6 @@ const ConfigForm = ({ vehicleConfig }) => {
               value
             }
           });
-          console.log("************1st res", res);
           let newConfig = { ...config };
           newConfig.properties[key] = value;
           setConfig(newConfig);
@@ -125,7 +121,6 @@ const ConfigForm = ({ vehicleConfig }) => {
   // i really should chagne the vehicle schema/db
   socket.removeAllListeners("delete property to vehicle");
   socket.on("delete property to vehicle", async ({ key, id, origin }) => {
-    console.log("************ prop to delete", key, origin, id);
     // delete data
     if (id === vehicleConfig._id) {
       try {
@@ -136,7 +131,6 @@ const ConfigForm = ({ vehicleConfig }) => {
             key
           }
         });
-        console.log("************ deleted", res);
         let newConfig = { ...config };
         delete newConfig.properties[key];
         setConfig(newConfig);
