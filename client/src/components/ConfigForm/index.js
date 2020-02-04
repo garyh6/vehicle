@@ -18,14 +18,13 @@ const ConfigForm = ({ vehicleConfig }) => {
   };
 
   const currentDatetime = getCurrentDatetime();
-  const parabola = x => fixed2(x + Math.random() * 10);
+  const tempFn = x => fixed2(x + Math.random());
   const [subtract, setSubtract] = useState(false);
-  const [tempX, setTempX] = useState(config.x);
-  const [tempY, setTempY] = useState(config.temperature);
+  const [temp, setTemp] = useState(config.temperature);
   const [coordinateX, setCoordinateX] = useState(config.x);
   const [coordinateY, setCoordinateY] = useState(config.y);
 
-  const line = x => fixed2(0.1 * x + 11);
+  const line = x => fixed2(0.1 * x + 40);
 
   // Emit changing temperature data
   // Emit changing x coordinate
@@ -33,20 +32,20 @@ const ConfigForm = ({ vehicleConfig }) => {
 
   useInterval(async () => {
     // Random Temp
-    setTempY(parabola(tempX));
+    setTemp(tempFn(temp));
 
     if (coordinateX < 20) setSubtract(false);
     if (coordinateX > 800) setSubtract(true);
 
     // using tempX for simplicity
-    setCoordinateX(tempX);
-    setCoordinateY(line(tempX));
+    setCoordinateX(temp);
+    setCoordinateY(line(temp));
 
     socket.emit(
       "new vehicle data",
       {
         vehicleId: config._id,
-        temperature: tempY,
+        temperature: temp,
         x: coordinateX,
         y: coordinateY,
         datetime: currentDatetime
@@ -58,16 +57,16 @@ const ConfigForm = ({ vehicleConfig }) => {
     );
 
     if (subtract) {
-      let val = Math.abs(fixed2(tempX - Math.random() * 10));
-      setTempX(val);
+      let val = Math.abs(fixed2(temp - Math.random() * 50));
+      setTemp(val);
     } else {
-      let val = Math.abs(fixed2(tempX + Math.random() * 10));
-      setTempX(val);
+      let val = Math.abs(fixed2(temp + Math.random() * 50));
+      setTemp(val);
     }
 
     setConfig({
       ...config,
-      temperature: tempY,
+      temperature: temp,
       x: coordinateX,
       y: coordinateY
     });
@@ -77,7 +76,7 @@ const ConfigForm = ({ vehicleConfig }) => {
         method: "patch",
         url: `http://${process.env.REACT_APP_DEV_SERVER}/properties/${vehicleConfig._id}/internal`,
         data: {
-          temperature: tempY,
+          temperature: temp,
           x: coordinateX,
           y: coordinateY
         }
